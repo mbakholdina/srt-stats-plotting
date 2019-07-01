@@ -11,7 +11,18 @@ Plotting script designed to visualize SRT core statistics.
 # Requirements
 
 * python 3.6+
-* PhantomJS 2.1 for [exporting plots](https://bokeh.pydata.org/en/latest/docs/user_guide/export.html)
+* PhantomJS 2.1 optional to [export plots](https://bokeh.pydata.org/en/latest/docs/user_guide/export.html)
+
+### Library dependencies
+
+* bokeh
+* pandas
+* click
+
+To install the library dependencies with `requirements.txt`:
+```
+pip install -r requirements.txt
+```
 
 # Script Usage
 

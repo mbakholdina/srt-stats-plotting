@@ -40,7 +40,7 @@ def create_packets_plot(source, is_sender):
             linedesc('pktSndLoss', 'Lost', 'orange'),
             linedesc('pktRetrans', 'Retransmitted', 'blue'),
             linedesc('pktSndDrop', 'Dropped', 'red'),
-            linedesc('pktFlightSize', 'On Flight', 'black')
+            linedesc('pktFlightSize', 'On Flight', 'black'),
         ]
     else:
         cols = [
@@ -48,10 +48,16 @@ def create_packets_plot(source, is_sender):
             linedesc('pktRcvLoss', 'Lost', 'orange'),
             linedesc('pktRcvRetrans', 'Retransmitted', 'blue'),
             linedesc('pktRcvBelated', 'Belated', 'grey'),
-            linedesc('pktRcvDrop', 'Dropped', 'red')
+            linedesc('pktRcvDrop', 'Dropped', 'red'),
         ]
 
-    return create_plot('Packets (' + side_name + ' Side)', 'Time (ms)', 'Number of Packets', source, cols)
+    return create_plot(
+        'Packets (' + side_name + ' Side)',
+        'Time (ms)',
+        'Number of Packets',
+        source,
+        cols,
+    )
 
 
 def create_bytes_plot(source, is_sender, df):
@@ -61,18 +67,20 @@ def create_bytes_plot(source, is_sender, df):
     if is_sender:
         cols = [
             linedesc('byteSent', 'Sent', 'green'),
-            linedesc('byteSndDrop', 'Dropped', 'red')
+            linedesc('byteSndDrop', 'Dropped', 'red'),
         ]
 
-        #if 'byteAvailSndBuf' in df.columns:
+        # if 'byteAvailSndBuf' in df.columns:
         #    cols.append(linedesc('byteAvailSndBuf', 'Available SND Buffer', 'black'))
     else:
         cols = [
             linedesc('byteRecv', 'Received', 'green'),
-            linedesc('byteRcvDrop', 'Dropped', 'red')
+            linedesc('byteRcvDrop', 'Dropped', 'red'),
         ]
 
-    return create_plot('Bytes (' + side_name + ' Side)', 'Time (ms)', 'Bytes', source, cols)
+    return create_plot(
+        'Bytes (' + side_name + ' Side)', 'Time (ms)', 'Bytes', source, cols
+    )
 
 
 def create_rate_plot(source, is_sender):
@@ -80,31 +88,25 @@ def create_rate_plot(source, is_sender):
 
     # Use a list of named tuples to select data columns
     if is_sender:
-        cols = [
-            linedesc('mbpsSendRate', '', 'green'),
-        ]
+        cols = [linedesc('mbpsSendRate', '', 'green')]
     else:
-        cols = [
-            linedesc('mbpsRecvRate', '', 'green'),
-        ]
+        cols = [linedesc('mbpsRecvRate', '', 'green')]
 
     return create_plot(side_name + ' Rate', 'Time (ms)', 'Rate (Mbps)', source, cols)
 
 
 def create_rtt_plot(source):
-    cols = [
-        linedesc('msRTT', '', 'blue'),
-    ]
+    cols = [linedesc('msRTT', '', 'blue')]
 
     return create_plot('Round-Trip Time', 'Time (ms)', 'RTT (ms)', source, cols)
 
 
 def create_pkt_send_period_plot(source):
-    cols = [
-        linedesc('usPktSndPeriod', '', 'blue'),
-    ]
+    cols = [linedesc('usPktSndPeriod', '', 'blue')]
 
-    return create_plot('Packet Sending Period', 'Time (ms)', 'Period (μs)', source, cols)
+    return create_plot(
+        'Packet Sending Period', 'Time (ms)', 'Period (μs)', source, cols
+    )
 
 
 def create_avail_buffer_plot(source, is_sender, df):
@@ -115,18 +117,16 @@ def create_avail_buffer_plot(source, is_sender, df):
         if not 'byteAvailSndBuf' in df.columns:
             return None
 
-        cols = [
-            linedesc('byteAvailSndBuf', '', 'green'),
-        ]
+        cols = [linedesc('byteAvailSndBuf', '', 'green')]
     else:
         if not 'byteAvailRcvBuf' in df.columns:
             return None
 
-        cols = [
-            linedesc('byteAvailRcvBuf', '', 'green'),
-        ]
+        cols = [linedesc('byteAvailRcvBuf', '', 'green')]
 
-    return create_plot('Available '+ side_name + ' Buffer Size', 'Time (ms)', 'Bytes', source, cols)
+    return create_plot(
+        'Available ' + side_name + ' Buffer Size', 'Time (ms)', 'Bytes', source, cols
+    )
 
 
 # TODO: Implement
@@ -146,13 +146,15 @@ def calculate_fec_stats(stats_file):
 
     # Calculate summary and average FEC overhead
     df1 = df.sum(axis=0)
-    srt_packets = df1['pktRecv'] - df1['pktRcvFilterExtra'] # srt packets only without extra FEC packets
+    srt_packets = (
+        df1['pktRecv'] - df1['pktRcvFilterExtra']
+    )  # srt packets only without extra FEC packets
     sum_overhead = round(df1['pktRcvFilterExtra'] * 100 / srt_packets, 2)
-    
+
     s = df['pktRcvFilterExtra'] * 100 / (df['pktRecv'] - df['pktRcvFilterExtra'])
     avg_overhead = s.sum() / s.size
     avg_overhead = round(avg_overhead, 4)
-   
+
     # Reconstructed and Not reconstructed packets
     sum_reconstructed = round(df1['pktRcvFilterSupply'] * 100 / srt_packets, 2)
     sum_not_reconstructed = round(df1['pktRcvFilterLoss'] * 100 / srt_packets, 2)
@@ -177,8 +179,10 @@ def calculate_fec_stats_from_directory(dir_path):
 def calculate_received_packets_stats(stats_file):
     df = pd.read_csv(stats_file)
     df1 = df.sum(axis=0)
-    srt_packets = df1['pktRecv'] - df1['pktRcvFilterExtra'] # srt packets only without extra FEC packets
-   
+    srt_packets = (
+        df1['pktRecv'] - df1['pktRcvFilterExtra']
+    )  # srt packets only without extra FEC packets
+
     lost = round(df1['pktRcvLoss'] * 100 / srt_packets, 2)
     retransmitted = round(df1['pktRcvRetrans'] * 100 / srt_packets, 2)
     dropped = round(df1['pktRcvDrop'] * 100 / srt_packets, 2)
@@ -191,41 +195,28 @@ def calculate_received_packets_stats(stats_file):
 
 
 @click.command()
-@click.argument(
-    'stats_filepath', 
-    type=click.Path(exists=True)
-)
+@click.argument('stats_filepath', type=click.Path(exists=True))
 @click.option(
-    '--is-sender', 
-    is_flag=True, 
-    default = False, 
-    help=   'Should be set if sender statistics is provided. Otherwise, '
-            'it is assumed that receiver statistics is provided.'
+    '--is-sender',
+    is_flag=True,
+    default=False,
+    help='Should be set if sender statistics is provided. Otherwise, '
+    'it is assumed that receiver statistics is provided.',
 )
 @click.option(
     '--is-fec',
-    is_flag=True, 
-    default = False, 
-    help='Should be set if packet filter (FEC) stats is enabled.'
+    is_flag=True,
+    default=False,
+    help='Should be set if packet filter (FEC) stats is enabled.',
 )
 @click.option(
-    '--export-png',
-    is_flag=True, 
-    default = False, 
-    help='Export plots to .png files.'
+    '--export-png', is_flag=True, default=False, help='Export plots to .png files.'
 )
-def plot_graph(
-    stats_filepath,
-    is_sender, 
-    is_fec,
-    export_png
-):
+def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     filepath = pathlib.Path(stats_filepath)
     filename = filepath.name
     if not filename.endswith('.csv'):
-        raise IsNotCSVFile(
-            f'{filepath} does not correspond to a .csv file'
-        )
+        raise IsNotCSVFile(f'{filepath} does not correspond to a .csv file')
     name, _ = filename.rsplit('.', 1)
     name_parts = name.split('-')
     html_filename = name + '.html'
@@ -287,8 +278,16 @@ def plot_graph(
     plot_window_size.title.text = 'Window Size'
     plot_window_size.xaxis.axis_label = 'Time (ms)'
     plot_window_size.yaxis.axis_label = 'Number of Packets'
-    plot_window_size.line(x='Time', y='pktFlowWindow', color='green', legend='Flow Window', source=source)
-    plot_window_size.line(x='Time', y='pktCongestionWindow', color='red', legend='Congestion Window', source=source)
+    plot_window_size.line(
+        x='Time', y='pktFlowWindow', color='green', legend='Flow Window', source=source
+    )
+    plot_window_size.line(
+        x='Time',
+        y='pktCongestionWindow',
+        color='red',
+        legend='Congestion Window',
+        source=source,
+    )
 
     plot_latency = None
     if 'RCVLATENCYms' in df.columns:
@@ -305,7 +304,9 @@ def plot_graph(
             # The following two lines remove toolbar from PNG
             plot_packet_period.toolbar.logo = None
             plot_packet_period.toolbar_location = None
-            bokeh.io.export_png(plot_packet_period, filename=f'{name}-pktsendperiod.png')
+            bokeh.io.export_png(
+                plot_packet_period, filename=f'{name}-pktsendperiod.png'
+            )
 
     plot_avail_1 = create_avail_buffer_plot(source, is_sender, df)
     if export_png and plot_avail_1:
@@ -323,19 +324,39 @@ def plot_graph(
         plot_fec.title.text = 'FEC - Packets (Receiver Side)'
         plot_fec.xaxis.axis_label = 'Time (ms)'
         plot_fec.yaxis.axis_label = 'Number of Packets'
-        plot_fec.line(x='Time', y='pktRcvFilterExtra', color='blue', legend='Extra received', source=source)
-        plot_fec.line(x='Time', y='pktRcvFilterSupply', color='green', legend='Reconstructed', source=source)
-        plot_fec.line(x='Time', y='pktRcvFilterLoss', color='red', legend='Not reconstructed', source=source)
+        plot_fec.line(
+            x='Time',
+            y='pktRcvFilterExtra',
+            color='blue',
+            legend='Extra received',
+            source=source,
+        )
+        plot_fec.line(
+            x='Time',
+            y='pktRcvFilterSupply',
+            color='green',
+            legend='Reconstructed',
+            source=source,
+        )
+        plot_fec.line(
+            x='Time',
+            y='pktRcvFilterLoss',
+            color='red',
+            legend='Not reconstructed',
+            source=source,
+        )
 
     # Show the results
-    grid = layouts.gridplot([
-        [plot_packets, plot_window_size],
-        [plot_bytes, plot_rtt],
-        [plot_rate, plot_bw],
-        [plot_packet_period, plot_latency], 
-        [plot_avail_1, plot_avail_2],
-        [plot_fec]
-    ])
+    grid = layouts.gridplot(
+        [
+            [plot_packets, plot_window_size],
+            [plot_bytes, plot_rtt],
+            [plot_rate, plot_bw],
+            [plot_packet_period, plot_latency],
+            [plot_avail_1, plot_avail_2],
+            [plot_fec],
+        ]
+    )
     plotting.show(grid)
 
 

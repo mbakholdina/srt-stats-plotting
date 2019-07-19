@@ -67,7 +67,7 @@ def create_bytes_plot(source, is_sender, df):
     if is_sender:
         cols = [
             linedesc('byteSent', 'Sent', 'green'),
-            linedesc('byteSndDrop', 'Dropped', 'red'),
+            linedesc('byteSndDrop', 'Dropped', 'red')
         ]
 
         # if 'byteAvailSndBuf' in df.columns:
@@ -88,7 +88,10 @@ def create_rate_plot(source, is_sender):
 
     # Use a list of named tuples to select data columns
     if is_sender:
-        cols = [linedesc('mbpsSendRate', '', 'green')]
+        cols = [
+            linedesc('mbpsSendRate', 'Rate', 'green'),
+            linedesc('mbpsMaxBW', 'Bandwidth Limit', 'black')
+        ]
     else:
         cols = [linedesc('mbpsRecvRate', '', 'green')]
 

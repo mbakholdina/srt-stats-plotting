@@ -90,7 +90,7 @@ def create_rate_plot(source, is_sender):
     if is_sender:
         cols = [
             linedesc('mbpsSendRate', 'Rate', 'green'),
-            linedesc('mbpsMaxBW', 'Bandwidth Limit', 'black')
+            #linedesc('mbpsMaxBW', 'Bandwidth Limit', 'black')
         ]
     else:
         cols = [linedesc('mbpsRecvRate', '', 'green')]
@@ -251,6 +251,11 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
 
     # Create plots
     plot_rtt = create_rtt_plot(source)
+    if export_png:
+        # The following two lines remove toolbar from PNG
+        plot_rtt.toolbar.logo = None
+        plot_rtt.toolbar_location = None
+        bokeh.io.export_png(plot_rtt, filename=f'{name}-rtt.png')
 
     # Packets Statistics plot (receiver or sender)
     plot_packets = create_packets_plot(source, is_sender)

@@ -38,6 +38,21 @@ Use `--help` option in order to get the full list of options
 --help        Show this message and exit.
 ```
 
+# Example plots
+
+The script plots different charts from SRT statistics. For example, a chart to visualize statistics on the packets being sent, lost, retransmitted, on flight, dropped.
+
+![](./img/euw_usw-alg-busy-filecc-msgsize-1456-stats-snd-0-packets.png)
+
+Another chart illustrates the sending rate in Mbps. 
+
+![](./img/euw_usw-alg-busy-filecc-msgsize-1456-stats-snd-0-rate.png)
+
+Available size of the sender's buffer helpts to detect if there is enough space to store outgoing data, or the source generates data faster then SRT can transmit.
+
+![](./img/euw_usw-alg-busy-filecc-msgsize-1456-stats-snd-0-availbuffer.png)
+
+
 # ToDo
 
-* setup.py
+-[ ] setup.py

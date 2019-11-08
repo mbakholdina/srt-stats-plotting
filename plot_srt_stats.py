@@ -12,21 +12,26 @@ import pandas as pd
 
 PLOT_WIDTH = 800
 PLOT_HEIGHT = 300
-linedesc = namedtuple("linedesc", ['col', 'desc', 'color'])
+linedesc = namedtuple("linedesc", ['col', 'legend', 'color'])
 
 
 class IsNotCSVFile(Exception):
     pass
 
 
-def create_plot(title, xlabel, ylabel, source, lines):
+def create_plot(title, xlabel, ylabel, source, lines, yformatter=None):
     fig = plotting.figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
     fig.title.text = title
     fig.xaxis.axis_label = xlabel
     fig.yaxis.axis_label = ylabel
 
+    fig.xaxis.formatter = models.NumeralTickFormatter(format='0,0')
+    if yformatter is not None:
+        fig.yaxis.formatter = yformatter
+
     for x in lines:
-        fig.line(x='Time', y=x.col, color=x.color, legend=x.desc, source=source)
+        fig.line(x='Time', y=x.col, color=x.color, legend=x.legend, source=source)
+
     return fig
 
 
@@ -57,6 +62,7 @@ def create_packets_plot(source, is_sender):
         'Number of Packets',
         source,
         cols,
+        models.NumeralTickFormatter(format='0,0')
     )
 
 
@@ -66,20 +72,25 @@ def create_bytes_plot(source, is_sender, df):
     # Use a list of named tuples to select data columns
     if is_sender:
         cols = [
-            linedesc('byteSent', 'Sent', 'green'),
-            linedesc('byteSndDrop', 'Dropped', 'red')
+            linedesc('MBSent', 'Sent', 'green'),
+            linedesc('MBSndDrop', 'Dropped', 'red')
         ]
 
         # if 'byteAvailSndBuf' in df.columns:
         #    cols.append(linedesc('byteAvailSndBuf', 'Available SND Buffer', 'black'))
     else:
         cols = [
-            linedesc('byteRecv', 'Received', 'green'),
-            linedesc('byteRcvDrop', 'Dropped', 'red'),
+            linedesc('MBRecv', 'Received', 'green'),
+            linedesc('MBRcvDrop', 'Dropped', 'red'),
         ]
 
     return create_plot(
-        'Bytes (' + side_name + ' Side)', 'Time (ms)', 'Bytes', source, cols
+        'Megabytes (' + side_name + ' Side)',
+        'Time (ms)',
+        'MB',
+        source,
+        cols,
+        models.NumeralTickFormatter(format='0,0.00')
     )
 
 
@@ -89,26 +100,43 @@ def create_rate_plot(source, is_sender):
     # Use a list of named tuples to select data columns
     if is_sender:
         cols = [
-            linedesc('mbpsSendRate', 'Rate', 'green'),
+            linedesc('mbpsSendRate', None, 'green'),
             #linedesc('mbpsMaxBW', 'Bandwidth Limit', 'black')
         ]
     else:
         cols = [linedesc('mbpsRecvRate', '', 'green')]
 
-    return create_plot(side_name + ' Rate', 'Time (ms)', 'Rate (Mbps)', source, cols)
+    return create_plot(
+        side_name + ' Rate',
+        'Time (ms)',
+        'Rate (Mbps)',
+        source,
+        cols,
+        models.NumeralTickFormatter(format='0,0.00')
+    )
 
 
 def create_rtt_plot(source):
     cols = [linedesc('msRTT', '', 'blue')]
 
-    return create_plot('Round-Trip Time', 'Time (ms)', 'RTT (ms)', source, cols)
+    return create_plot(
+        'Round-Trip Time',
+        'Time (ms)',
+        'RTT (ms)',
+        source,
+        cols
+    )
 
 
 def create_pkt_send_period_plot(source):
     cols = [linedesc('usPktSndPeriod', '', 'blue')]
 
     return create_plot(
-        'Packet Sending Period', 'Time (ms)', 'Period (μs)', source, cols
+        'Packet Sending Period',
+        'Time (ms)',
+        'Period (μs)',
+        source,
+        cols
     )
 
 
@@ -119,16 +147,19 @@ def create_avail_buffer_plot(source, is_sender, df):
     if is_sender:
         if not 'byteAvailSndBuf' in df.columns:
             return None
-
-        cols = [linedesc('byteAvailSndBuf', '', 'green')]
+        cols = [linedesc('MBAvailSndBuf', '', 'green')]
     else:
         if not 'byteAvailRcvBuf' in df.columns:
             return None
-
-        cols = [linedesc('byteAvailRcvBuf', '', 'green')]
+        cols = [linedesc('MBAvailRcvBuf', '', 'green')]
 
     return create_plot(
-        'Available ' + side_name + ' Buffer Size', 'Time (ms)', 'Bytes', source, cols
+        'Available ' + side_name + ' Buffer Size',
+        'Time (ms)',
+        'MB',
+        source,
+        cols,
+        models.NumeralTickFormatter(format='0,0')
     )
 
 
@@ -198,24 +229,34 @@ def calculate_received_packets_stats(stats_file):
 
 
 @click.command()
-@click.argument('stats_filepath', type=click.Path(exists=True))
+@click.argument(
+    'stats_filepath',
+    type=click.Path(exists=True)
+)
 @click.option(
     '--is-sender',
     is_flag=True,
     default=False,
-    help='Should be set if sender statistics is provided. Otherwise, '
-    'it is assumed that receiver statistics is provided.',
+    help=   'Should be set if sender statistics is provided. Otherwise, '
+            'it is assumed that receiver statistics is provided.',
+    show_default=True
 )
 @click.option(
     '--is-fec',
     is_flag=True,
     default=False,
     help='Should be set if packet filter (FEC) stats is enabled.',
+    show_default=True
 )
 @click.option(
-    '--export-png', is_flag=True, default=False, help='Export plots to .png files.'
+    '--export-png',
+    is_flag=True,
+    default=False,
+    help='Export plots to .png files.',
+    show_default=True
 )
 def plot_graph(stats_filepath, is_sender, is_fec, export_png):
+    """ TODO """
     filepath = pathlib.Path(stats_filepath)
     filename = filepath.name
     if not filename.endswith('.csv'):
@@ -244,6 +285,17 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
 
     # Prepare data
     df = pd.read_csv(filepath)
+
+    DIVISOR = 1000000
+    df['MBRecv'] = df['byteRecv'] / DIVISOR
+    df['MBRcvDrop'] = df['byteRcvDrop'] / DIVISOR
+    df['MBSent'] = df['byteSent'] / DIVISOR
+    df['MBSndDrop'] = df['byteSndDrop'] / DIVISOR
+    if 'byteAvailRcvBuf' in df.columns:
+        df['MBAvailRcvBuf'] = df['byteAvailRcvBuf'] / DIVISOR
+    if 'byteAvailSndBuf' in df.columns:
+        df['MBAvailSndBuf'] = df['byteAvailSndBuf'] / DIVISOR
+
     source = models.ColumnDataSource(df)
 
     # Output to static .html file
@@ -269,6 +321,8 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     plot_bw.title.text = 'Bandwith'
     plot_bw.xaxis.axis_label = 'Time (ms)'
     plot_bw.yaxis.axis_label = 'Bandwith (Mbps)'
+    plot_bw.xaxis.formatter = models.NumeralTickFormatter(format='0,0')
+    plot_bw.yaxis.formatter = models.NumeralTickFormatter(format='0,0')
     plot_bw.line(x='Time', y='mbpsBandwidth', color='green', source=source)
 
     # Sending / Receiving Rate plot
@@ -286,6 +340,8 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     plot_window_size.title.text = 'Window Size'
     plot_window_size.xaxis.axis_label = 'Time (ms)'
     plot_window_size.yaxis.axis_label = 'Number of Packets'
+    plot_window_size.xaxis.formatter = models.NumeralTickFormatter(format='0,0')
+    plot_window_size.yaxis.formatter = models.NumeralTickFormatter(format='0,0')
     plot_window_size.line(
         x='Time', y='pktFlowWindow', color='green', legend='Flow Window', source=source
     )

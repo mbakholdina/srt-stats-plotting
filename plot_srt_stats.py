@@ -12,6 +12,7 @@ import pandas as pd
 
 PLOT_WIDTH = 800
 PLOT_HEIGHT = 300
+TOOLS = 'pan,xwheel_pan,box_zoom,reset,save'
 linedesc = namedtuple("linedesc", ['col', 'legend', 'color'])
 
 
@@ -20,7 +21,11 @@ class IsNotCSVFile(Exception):
 
 
 def create_plot(title, xlabel, ylabel, source, lines, yformatter=None):
-    fig = plotting.figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
+    fig = plotting.figure(
+        plot_width=PLOT_WIDTH,
+        plot_height=PLOT_HEIGHT,
+        tools=TOOLS
+    )
     fig.title.text = title
     fig.xaxis.axis_label = xlabel
     fig.yaxis.axis_label = ylabel
@@ -327,7 +332,11 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     plots['packets'] = plot_packets
 
     # Bandwidth
-    plot_bw = plotting.figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
+    plot_bw = plotting.figure(
+        plot_width=PLOT_WIDTH,
+        plot_height=PLOT_HEIGHT,
+        tools=TOOLS
+    )
     plot_bw.title.text = 'Bandwith'
     plot_bw.xaxis.axis_label = 'Time (ms)'
     plot_bw.yaxis.axis_label = 'Bandwith (Mbps)'
@@ -350,7 +359,11 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     plots['bytes'] = plot_bytes
 
     # Window Size
-    plot_window_size = plotting.figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
+    plot_window_size = plotting.figure(
+        plot_width=PLOT_WIDTH,
+        plot_height=PLOT_HEIGHT,
+        tools=TOOLS
+    )
     plot_window_size.title.text = 'Window Size'
     plot_window_size.xaxis.axis_label = 'Time (ms)'
     plot_window_size.yaxis.axis_label = 'Number of Packets'
@@ -375,7 +388,11 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     # Latency
     plot_latency = None
     if 'RCVLATENCYms' in df.columns:
-        plot_latency = plotting.figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
+        plot_latency = plotting.figure(
+            plot_width=PLOT_WIDTH,
+            plot_height=PLOT_HEIGHT,
+            tools=TOOLS
+        )
         plot_latency.title.text = 'Latency'
         plot_latency.xaxis.axis_label = 'Time (ms)'
         plot_latency.yaxis.axis_label = 'Latency (ms)'
@@ -414,7 +431,11 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     # Receiver Statisitcs
     plot_fec = None
     if is_fec:
-        plot_fec = plotting.figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
+        plot_fec = plotting.figure(
+            plot_width=PLOT_WIDTH,
+            plot_height=PLOT_HEIGHT,
+            tools=TOOLS
+        )
         plot_fec.title.text = 'FEC - Packets (Receiver Side)'
         plot_fec.xaxis.axis_label = 'Time (ms)'
         plot_fec.yaxis.axis_label = 'Number of Packets'

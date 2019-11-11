@@ -4,7 +4,8 @@
 <a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
-Plotting script designed to visualize SRT core statistics. 
+Script designed to plot graphs out of SRT core statistics.
+
 [SRT](https://github.com/Haivision/srt) stands for Secure Reliable Transport and is an open source transport technology that optimizes streaming performance across unpredictable networks, such as the Internet.
 
 # Requirements

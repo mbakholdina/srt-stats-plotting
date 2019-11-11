@@ -256,7 +256,11 @@ def calculate_received_packets_stats(stats_file):
     show_default=True
 )
 def plot_graph(stats_filepath, is_sender, is_fec, export_png):
-    """ TODO """
+    """
+    This script processes .csv file with SRT core statistics produced by
+    test application and visualizes the data. Depending on whether 
+    statistics is collected on sender or receiver side, the plots may vary.
+    """
     filepath = pathlib.Path(stats_filepath)
     filename = filepath.name
     if not filename.endswith('.csv'):
@@ -301,6 +305,9 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     # Output to static .html file
     plotting.output_file(html_filepath, title="SRT Stats Visualization")
 
+    # A dict for storing plots
+    plots = {}
+
     # Create plots
     plot_rtt = create_rtt_plot(source)
     if export_png:
@@ -308,15 +315,18 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
         plot_rtt.toolbar.logo = None
         plot_rtt.toolbar_location = None
         bokeh.io.export_png(plot_rtt, filename=f'{name}-rtt.png')
+    plots['rtt'] = plot_rtt
 
-    # Packets Statistics plot (receiver or sender)
+    # Packets Statistics(receiver or sender)
     plot_packets = create_packets_plot(source, is_sender)
     if export_png:
         # The following two lines remove toolbar from PNG
         plot_packets.toolbar.logo = None
         plot_packets.toolbar_location = None
         bokeh.io.export_png(plot_packets, filename=f'{name}-packets.png')
+    plots['packets'] = plot_packets
 
+    # Bandwidth
     plot_bw = plotting.figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
     plot_bw.title.text = 'Bandwith'
     plot_bw.xaxis.axis_label = 'Time (ms)'
@@ -324,18 +334,22 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     plot_bw.xaxis.formatter = models.NumeralTickFormatter(format='0,0')
     plot_bw.yaxis.formatter = models.NumeralTickFormatter(format='0,0')
     plot_bw.line(x='Time', y='mbpsBandwidth', color='green', source=source)
+    plots['bw'] = plot_bw
 
-    # Sending / Receiving Rate plot
+    # Sending / Receiving Rate
     plot_rate = create_rate_plot(source, is_sender)
     if export_png:
         # The following two lines remove toolbar from PNG
         plot_rate.toolbar.logo = None
         plot_rate.toolbar_location = None
         bokeh.io.export_png(plot_rate, filename=f'{name}-rate.png')
+    plots['rate'] = plot_rate
 
-    # Sending / Receiving Bytes plot
+    # Sending / Receiving Bytes
     plot_bytes = create_bytes_plot(source, is_sender, df)
+    plots['bytes'] = plot_bytes
 
+    # Window Size
     plot_window_size = plotting.figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
     plot_window_size.title.text = 'Window Size'
     plot_window_size.xaxis.axis_label = 'Time (ms)'
@@ -343,7 +357,11 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     plot_window_size.xaxis.formatter = models.NumeralTickFormatter(format='0,0')
     plot_window_size.yaxis.formatter = models.NumeralTickFormatter(format='0,0')
     plot_window_size.line(
-        x='Time', y='pktFlowWindow', color='green', legend='Flow Window', source=source
+        x='Time',
+        y='pktFlowWindow',
+        color='green',
+        legend='Flow Window',
+        source=source
     )
     plot_window_size.line(
         x='Time',
@@ -352,7 +370,9 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
         legend='Congestion Window',
         source=source,
     )
+    plots['window_size'] = plot_window_size
 
+    # Latency
     plot_latency = None
     if 'RCVLATENCYms' in df.columns:
         plot_latency = plotting.figure(plot_width=PLOT_WIDTH, plot_height=PLOT_HEIGHT)
@@ -360,10 +380,14 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
         plot_latency.xaxis.axis_label = 'Time (ms)'
         plot_latency.yaxis.axis_label = 'Latency (ms)'
         plot_latency.line(x='Time', y='RCVLATENCYms', color='blue', source=source)
+        plots['latency'] = plot_latency
 
+    # Packet Sending Period
     plot_packet_period = None
     if is_sender:
         plot_packet_period = create_pkt_send_period_plot(source)
+        # TODO: ? Why plot_packet_period is here?
+        # Function create_pkt_send_period_plot does not return None
         if export_png and plot_packet_period:
             # The following two lines remove toolbar from PNG
             plot_packet_period.toolbar.logo = None
@@ -371,15 +395,21 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
             bokeh.io.export_png(
                 plot_packet_period, filename=f'{name}-pktsendperiod.png'
             )
+        plots['packet_sending_period'] = plot_packet_period
 
+    # Available Buffers
     plot_avail_1 = create_avail_buffer_plot(source, is_sender, df)
     if export_png and plot_avail_1:
         # The following two lines remove toolbar from PNG
         plot_avail_1.toolbar.logo = None
         plot_avail_1.toolbar_location = None
         bokeh.io.export_png(plot_avail_1, filename=f'{name}-availbuffer.png')
+    if plot_avail_1:
+        plots['available_buffer_snd'] = plot_avail_1
 
     plot_avail_2 = create_avail_buffer_plot(source, not is_sender, df)
+    if plot_avail_2:
+        plots['available_buffer_rcv'] = plot_avail_2
 
     # Receiver Statisitcs
     plot_fec = None
@@ -409,6 +439,15 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
             legend='Not reconstructed',
             source=source,
         )
+
+        plots['fec'] = plot_fec
+
+    # Syncronize x-ranges of figures
+    last_key = list(plots)[-1]
+    last_fig = plots[last_key]
+    
+    for fig in plots.values():
+        fig.x_range = last_fig.x_range
 
     # Show the results
     grid = layouts.gridplot(

@@ -35,7 +35,7 @@ def create_plot(title, xlabel, ylabel, source, lines, yformatter=None):
         fig.yaxis.formatter = yformatter
 
     for x in lines:
-        fig.line(x='Time', y=x.col, color=x.color, legend=x.legend, source=source)
+        fig.line(x='Time', y=x.col, color=x.color, legend_label=x.legend, source=source)
 
     return fig
 
@@ -105,7 +105,7 @@ def create_rate_plot(source, is_sender):
     # Use a list of named tuples to select data columns
     if is_sender:
         cols = [
-            linedesc('mbpsSendRate', None, 'green'),
+            linedesc('mbpsSendRate', '', 'green'),
             #linedesc('mbpsMaxBW', 'Bandwidth Limit', 'black')
         ]
     else:
@@ -373,14 +373,14 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
         x='Time',
         y='pktFlowWindow',
         color='green',
-        legend='Flow Window',
+        legend_label='Flow Window',
         source=source
     )
     plot_window_size.line(
         x='Time',
         y='pktCongestionWindow',
         color='red',
-        legend='Congestion Window',
+        legend_label='Congestion Window',
         source=source,
     )
     plots['window_size'] = plot_window_size
@@ -443,21 +443,21 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
             x='Time',
             y='pktRcvFilterExtra',
             color='blue',
-            legend='Extra received',
+            legend_label='Extra received',
             source=source,
         )
         plot_fec.line(
             x='Time',
             y='pktRcvFilterSupply',
             color='green',
-            legend='Reconstructed',
+            legend_label='Reconstructed',
             source=source,
         )
         plot_fec.line(
             x='Time',
             y='pktRcvFilterLoss',
             color='red',
-            legend='Not reconstructed',
+            legend_label='Not reconstructed',
             source=source,
         )
 

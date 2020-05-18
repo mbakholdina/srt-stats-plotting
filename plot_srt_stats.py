@@ -37,6 +37,8 @@ def create_plot(title, xlabel, ylabel, source, lines, yformatter=None):
     for x in lines:
         fig.line(x='Time', y=x.col, color=x.color, legend_label=x.legend, source=source)
 
+    fig.legend.click_policy="hide"
+
     return fig
 
 

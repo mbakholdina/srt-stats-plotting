@@ -10,7 +10,7 @@ import click
 import pandas as pd
 
 
-PLOT_WIDTH = 800
+PLOT_WIDTH = 700
 PLOT_HEIGHT = 300
 TOOLS = 'pan,xwheel_pan,box_zoom,reset,save'
 linedesc = namedtuple("linedesc", ['col', 'legend', 'color'])

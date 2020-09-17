@@ -8,7 +8,7 @@ Script designed to plot graphs out of SRT core statistics.
 
 [SRT](https://github.com/Haivision/srt) stands for Secure Reliable Transport and is an open source transport technology that optimizes streaming performance across unpredictable networks, such as the Internet.
 
-# Requirements
+## Requirements
 
 * python 3.6+
 * PhantomJS 2.1 optional to [export plots](https://bokeh.pydata.org/en/latest/docs/user_guide/export.html)
@@ -18,7 +18,7 @@ To install the library dependencies run:
 pip install -r requirements.txt
 ```
 
-# Script Usage
+## Script Usage
 
 The main purpose of `plot_srt_stats.py` script is to visualize all the SRT core statistics produced during experiments by one of the [testing applications](https://github.com/Haivision/srt/blob/master/docs/stransmit.md) or third-party solutions supporting SRT protocol. Depending on whether this statistics is collected on sender or receiver side, the data plotted may vary.
 
@@ -38,7 +38,7 @@ Use `--help` option in order to get the full list of options
 --help        Show this message and exit.
 ```
 
-# Plots Description
+## Plots Description
 
 **Note:** Megabytes and Rate plots correlation is determined by the following formula
 
@@ -47,22 +47,20 @@ _Rate (Mbps) = MB / interval (s),_
 where _interval_ is the interval indicating how frequently the statistics is collected (in seconds).
 
 
-# Example Plots
+## Example Plots
 
-The script plots different charts from SRT statistics. For example, a chart to visualize statistics on the packets being sent, lost, retransmitted, on flight, dropped.
+The script plots different charts from SRT statistics. For example, a chart to visualize statistics on the packets being sent, lost, retransmitted, dropped or on flight:
 
-![](./img/euw_usw-alg-busy-filecc-msgsize-1456-stats-snd-0-packets.png)
+<img src="img/packets_1.png" alt="packets_1" style="zoom:50%;" />
 
-Another chart illustrates the sending rate in Mbps. 
+The legends are interactive. You can click, e.g., on `Dropped` and `On Flight` to disable the respective plots:
 
-![](./img/euw_usw-alg-busy-filecc-msgsize-1456-stats-snd-0-rate.png)
+<img src="img/packets_2.png" alt="packets_2" style="zoom:50%;" />
 
-Available size of the sender's buffer helpts to detect if there is enough space to store outgoing data, or the source generates data faster then SRT can transmit.
+Another chart illustrates the sending rate in Mbps:
 
-![](./img/euw_usw-alg-busy-filecc-msgsize-1456-stats-snd-0-availbuffer.png)
+<img src="img/sending_rate_mbps.png" alt="sending_rate_mbps" style="zoom:50%;" />
 
-# ToDo
+Available size of the sender's buffer helps to detect if there is enough space to store outgoing data, or the source generates data faster then SRT can transmit:
 
-* [] Add detailed plots description
-* [] Update the plots
-* [] Add information which test applications support collecting statistics in .csv and provide commands to use
+<img src="img/available_snd_buffer_size.png" alt="available_snd_buffer_size" style="zoom:50%;" />

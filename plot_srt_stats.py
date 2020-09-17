@@ -34,10 +34,16 @@ def create_plot(title, xlabel, ylabel, source, lines, yformatter=None):
     if yformatter is not None:
         fig.yaxis.formatter = yformatter
 
+    is_legend = False
     for x in lines:
-        fig.line(x='Time', y=x.col, color=x.color, legend_label=x.legend, source=source)
+        if x.legend != '':
+            is_legend = True
+            fig.line(x='Time', y=x.col, color=x.color, legend_label=x.legend, source=source)
+        else:
+            fig.line(x='Time', y=x.col, color=x.color, source=source)
 
-    fig.legend.click_policy="hide"
+    if is_legend:
+        fig.legend.click_policy="hide"
 
     return fig
 

@@ -172,7 +172,7 @@ def create_avail_buffer_plot(source, is_sender, df):
         'MB',
         source,
         cols,
-        models.NumeralTickFormatter(format='0,0')
+        models.NumeralTickFormatter(format='0,0.00')
     )
 
 

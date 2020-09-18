@@ -20,6 +20,14 @@ class IsNotCSVFile(Exception):
     pass
 
 
+def export_plot_png(export_png, plot, name, postfix):
+    if export_png:
+        # The following two lines remove toolbar from PNG
+        plot.toolbar.logo = None
+        plot.toolbar_location = None
+        bokeh.io.export_png(plot, filename=f'{name}-{postfix}.png')
+
+
 def create_plot(title, xlabel, ylabel, source, lines, yformatter=None):
     fig = plotting.figure(
         plot_width=PLOT_WIDTH,
@@ -51,9 +59,8 @@ def create_plot(title, xlabel, ylabel, source, lines, yformatter=None):
 def create_packets_plot(source, is_sender):
     side_name = 'Sender' if is_sender else 'Receiver'
 
-    # Use a list of named tuples to select data columns
     if is_sender:
-        cols = [
+        lines = [
             linedesc('pktSent', 'Sent', 'green'),
             linedesc('pktSndLoss', 'Lost', 'orange'),
             linedesc('pktRetrans', 'Retransmitted', 'blue'),
@@ -61,7 +68,7 @@ def create_packets_plot(source, is_sender):
             linedesc('pktFlightSize', 'On Flight', 'black'),
         ]
     else:
-        cols = [
+        lines = [
             linedesc('pktRecv', 'Received', 'green'),
             linedesc('pktRcvLoss', 'Lost', 'orange'),
             linedesc('pktRcvRetrans', 'Retransmitted', 'blue'),
@@ -74,25 +81,21 @@ def create_packets_plot(source, is_sender):
         'Time (ms)',
         'Number of Packets',
         source,
-        cols,
+        lines,
         models.NumeralTickFormatter(format='0,0')
     )
 
 
-def create_bytes_plot(source, is_sender, df):
+def create_bytes_plot(source, is_sender):
     side_name = 'Sender' if is_sender else 'Receiver'
 
-    # Use a list of named tuples to select data columns
     if is_sender:
-        cols = [
+        lines = [
             linedesc('MBSent', 'Sent', 'green'),
             linedesc('MBSndDrop', 'Dropped', 'red')
         ]
-
-        # if 'byteAvailSndBuf' in df.columns:
-        #    cols.append(linedesc('byteAvailSndBuf', 'Available SND Buffer', 'black'))
     else:
-        cols = [
+        lines = [
             linedesc('MBRecv', 'Received', 'green'),
             linedesc('MBRcvDrop', 'Dropped', 'red'),
         ]
@@ -102,7 +105,7 @@ def create_bytes_plot(source, is_sender, df):
         'Time (ms)',
         'MB',
         source,
-        cols,
+        lines,
         models.NumeralTickFormatter(format='0,0.00')
     )
 
@@ -110,69 +113,108 @@ def create_bytes_plot(source, is_sender, df):
 def create_rate_plot(source, is_sender):
     side_name = 'Sending' if is_sender else 'Receiving'
 
-    # Use a list of named tuples to select data columns
     if is_sender:
-        cols = [
-            linedesc('mbpsSendRate', '', 'green'),
-            #linedesc('mbpsMaxBW', 'Bandwidth Limit', 'black')
-        ]
+        lines = [linedesc('mbpsSendRate', '', 'green')]
     else:
-        cols = [linedesc('mbpsRecvRate', '', 'green')]
+        lines = [linedesc('mbpsRecvRate', '', 'green')]
 
     return create_plot(
         side_name + ' Rate',
         'Time (ms)',
         'Rate (Mbps)',
         source,
-        cols,
+        lines,
         models.NumeralTickFormatter(format='0,0.00')
     )
 
 
 def create_rtt_plot(source):
-    cols = [linedesc('msRTT', '', 'blue')]
+    lines = [linedesc('msRTT', '', 'blue')]
 
     return create_plot(
         'Round-Trip Time',
         'Time (ms)',
         'RTT (ms)',
         source,
-        cols
+        lines
     )
 
 
 def create_pkt_send_period_plot(source):
-    cols = [linedesc('usPktSndPeriod', '', 'blue')]
+    lines = [linedesc('usPktSndPeriod', '', 'blue')]
 
     return create_plot(
         'Packet Sending Period',
         'Time (ms)',
         'Period (μs)',
         source,
-        cols
+        lines
     )
 
 
-def create_avail_buffer_plot(source, is_sender, df):
+def create_avail_buffer_plot(source, is_sender):
     side_name = 'Sending' if is_sender else 'Receiving'
 
-    # Use a list of named tuples to select data columns
     if is_sender:
-        if not 'byteAvailSndBuf' in df.columns:
+        if not 'byteAvailSndBuf' in source.column_names:
             return None
-        cols = [linedesc('MBAvailSndBuf', '', 'green')]
+        lines = [linedesc('MBAvailSndBuf', '', 'green')]
     else:
-        if not 'byteAvailRcvBuf' in df.columns:
+        if not 'byteAvailRcvBuf' in source.column_names:
             return None
-        cols = [linedesc('MBAvailRcvBuf', '', 'green')]
+        lines = [linedesc('MBAvailRcvBuf', '', 'green')]
 
     return create_plot(
         'Available ' + side_name + ' Buffer Size',
         'Time (ms)',
         'MB',
         source,
-        cols,
+        lines,
         models.NumeralTickFormatter(format='0,0.00')
+    )
+
+
+def create_window_size_plot(source):
+    lines = [
+        linedesc('pktFlowWindow', 'Flow Window', 'green'),
+        linedesc('pktCongestionWindow', 'Congestion Window', 'red'),
+    ]
+
+    return create_plot(
+        'Window Size',
+        'Time (ms)',
+        'Number of Packets',
+        source,
+        lines,
+        models.NumeralTickFormatter(format='0,0')
+    )
+
+
+def create_latency_plot(source):
+    if 'RCVLATENCYms' in source.column_names:
+        lines = [linedesc('RCVLATENCYms', '', 'blue')]
+
+        return create_plot(
+            'Latency',
+            'Time (ms)',
+            'Latency (ms)',
+            source,
+            lines
+        )
+
+    return None
+
+
+def create_bandwidth_plot(source):
+    lines = [linedesc('mbpsBandwidth', '', 'green')]
+
+    return create_plot(
+        'Bandwith',
+        'Time (ms)',
+        'Bandwith (Mbps)',
+        source,
+        lines,
+        models.NumeralTickFormatter(format='0,0')
     )
 
 
@@ -276,8 +318,10 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     """
     filepath = pathlib.Path(stats_filepath)
     filename = filepath.name
+
     if not filename.endswith('.csv'):
         raise IsNotCSVFile(f'{filepath} does not correspond to a .csv file')
+
     name, _ = filename.rsplit('.', 1)
     name_parts = name.split('-')
     html_filename = name + '.html'
@@ -322,90 +366,29 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     plots = {}
 
     # Create plots
-    plot_rtt = create_rtt_plot(source)
-    if export_png:
-        # The following two lines remove toolbar from PNG
-        plot_rtt.toolbar.logo = None
-        plot_rtt.toolbar_location = None
-        bokeh.io.export_png(plot_rtt, filename=f'{name}-rtt.png')
-    plots['rtt'] = plot_rtt
+    # RTT
+    plots['rtt'] = create_rtt_plot(source)
+    export_plot_png(export_png, plots['rtt'], name, 'rtt')
 
-    # Packets Statistics(receiver or sender)
-    plot_packets = create_packets_plot(source, is_sender)
-    if export_png:
-        # The following two lines remove toolbar from PNG
-        plot_packets.toolbar.logo = None
-        plot_packets.toolbar_location = None
-        bokeh.io.export_png(plot_packets, filename=f'{name}-packets.png')
-    plots['packets'] = plot_packets
+    # Packets Statistics (receiver or sender)
+    plots['packets'] = create_packets_plot(source, is_sender)
+    export_plot_png(export_png, plots['packets'], name, 'packets')
 
     # Bandwidth
-    plot_bw = plotting.figure(
-        plot_width=PLOT_WIDTH,
-        plot_height=PLOT_HEIGHT,
-        tools=TOOLS
-    )
-    plot_bw.title.text = 'Bandwith'
-    plot_bw.xaxis.axis_label = 'Time (ms)'
-    plot_bw.yaxis.axis_label = 'Bandwith (Mbps)'
-    plot_bw.xaxis.formatter = models.NumeralTickFormatter(format='0,0')
-    plot_bw.yaxis.formatter = models.NumeralTickFormatter(format='0,0')
-    plot_bw.line(x='Time', y='mbpsBandwidth', color='green', source=source)
-    plots['bw'] = plot_bw
+    plots['bw'] = create_bandwidth_plot(source)
 
     # Sending / Receiving Rate
-    plot_rate = create_rate_plot(source, is_sender)
-    if export_png:
-        # The following two lines remove toolbar from PNG
-        plot_rate.toolbar.logo = None
-        plot_rate.toolbar_location = None
-        bokeh.io.export_png(plot_rate, filename=f'{name}-rate.png')
-    plots['rate'] = plot_rate
+    plots['rate'] = create_rate_plot(source, is_sender)
+    export_plot_png(export_png, plots['rate'], name, 'rate')
 
     # Sending / Receiving Bytes
-    plot_bytes = create_bytes_plot(source, is_sender, df)
-    plots['bytes'] = plot_bytes
+    plots['bytes'] = create_bytes_plot(source, is_sender)
 
     # Window Size
-    plot_window_size = plotting.figure(
-        plot_width=PLOT_WIDTH,
-        plot_height=PLOT_HEIGHT,
-        tools=TOOLS
-    )
-    plot_window_size.title.text = 'Window Size'
-    plot_window_size.xaxis.axis_label = 'Time (ms)'
-    plot_window_size.yaxis.axis_label = 'Number of Packets'
-    plot_window_size.xaxis.formatter = models.NumeralTickFormatter(format='0,0')
-    plot_window_size.yaxis.formatter = models.NumeralTickFormatter(format='0,0')
-    plot_window_size.line(
-        x='Time',
-        y='pktFlowWindow',
-        color='green',
-        legend_label='Flow Window',
-        source=source
-    )
-    plot_window_size.line(
-        x='Time',
-        y='pktCongestionWindow',
-        color='red',
-        legend_label='Congestion Window',
-        source=source,
-    )
-    plots['window_size'] = plot_window_size
+    plots['window_size'] = create_window_size_plot(source)
 
     # Latency
-    plot_latency = None
-    if 'RCVLATENCYms' in df.columns:
-        plot_latency = plotting.figure(
-            plot_width=PLOT_WIDTH,
-            plot_height=PLOT_HEIGHT,
-            tools=TOOLS
-        )
-        plot_latency.title.text = 'Latency'
-        plot_latency.xaxis.axis_label = 'Time (ms)'
-        plot_latency.yaxis.axis_label = 'Latency (ms)'
-        plot_latency.line(x='Time', y='RCVLATENCYms', color='blue', source=source)
-        plots['latency'] = plot_latency
+    plots['latency'] = create_latency_plot(source)
 
     # Packet Sending Period
     plot_packet_period = None
@@ -423,16 +406,15 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
         plots['packet_sending_period'] = plot_packet_period
 
     # Available Buffers
-    plot_avail_1 = create_avail_buffer_plot(source, is_sender, df)
+    plot_avail_1 = create_avail_buffer_plot(source, is_sender)
     if export_png and plot_avail_1:
-        # The following two lines remove toolbar from PNG
         plot_avail_1.toolbar.logo = None
         plot_avail_1.toolbar_location = None
         bokeh.io.export_png(plot_avail_1, filename=f'{name}-availbuffer.png')
     if plot_avail_1:
         plots['available_buffer_snd'] = plot_avail_1
 
-    plot_avail_2 = create_avail_buffer_plot(source, not is_sender, df)
+    plot_avail_2 = create_avail_buffer_plot(source, not is_sender)
     if plot_avail_2:
         plots['available_buffer_rcv'] = plot_avail_2
 
@@ -476,15 +458,17 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     last_fig = plots[last_key]
     
     for fig in plots.values():
+        if fig is None:
+            continue
         fig.x_range = last_fig.x_range
 
     # Show the results
     grid = layouts.gridplot(
         [
-            [plot_packets, plot_window_size],
-            [plot_bytes, plot_rtt],
-            [plot_rate, plot_bw],
-            [plot_packet_period, plot_latency],
+            [plots['packets'], plots['window_size']],
+            [plots['bytes'], plots['rtt']],
+            [plots['rate'], plots['bw']],
+            [plot_packet_period, plots['latency']],
             [plot_avail_1, plot_avail_2],
             [plot_fec],
         ]

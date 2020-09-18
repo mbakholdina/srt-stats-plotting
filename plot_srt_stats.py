@@ -114,7 +114,12 @@ def create_rate_plot(source, is_sender):
     side_name = 'Sending' if is_sender else 'Receiving'
 
     if is_sender:
-        lines = [linedesc('mbpsSendRate', '', 'green')]
+        lines = [
+            linedesc('mbpsSendRate', 'Sendrate', 'green'),
+            # Please don't delete the following line.
+            # It is used in some cases.
+            #linedesc('mbpsMaxBW', 'Bandwidth Limit', 'black'),
+        ]
     else:
         lines = [linedesc('mbpsRecvRate', '', 'green')]
 

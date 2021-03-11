@@ -57,17 +57,22 @@ def create_plot(title, xlabel, ylabel, source, lines, yformatter=None):
     return fig
 
 
-def create_packets_plot(source, is_sender, sockname):
+def create_packets_plot(source, is_sender, is_group, sockname):
     side_name = 'Sender' if is_sender else 'Receiver'
 
     if is_sender:
-        lines = [
-            linedesc('pktSent', 'Sent', 'green'),
-            linedesc('pktSndLoss', 'Lost', 'orange'),
-            linedesc('pktRetrans', 'Retransmitted', 'blue'),
-            linedesc('pktSndDrop', 'Dropped', 'red'),
-            linedesc('pktFlightSize', 'On Flight', 'black'),
-        ]
+        if is_group:
+            lines = [
+                linedesc('pktSentUnique', 'SentUnique', 'green'),
+            ]
+        else:
+            lines = [
+                linedesc('pktSent', 'Sent', 'green'),
+                linedesc('pktSndLoss', 'Lost', 'orange'),
+                linedesc('pktRetrans', 'Retransmitted', 'blue'),
+                linedesc('pktSndDrop', 'Dropped', 'red'),
+                linedesc('pktFlightSize', 'On Flight', 'black'),
+            ]
     else:
         lines = [
             linedesc('pktRecv', 'Received', 'green'),
@@ -331,52 +336,40 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
 
     sock_ids = list_socket_ids(df)
     
+    # A dict for storing plots
 
-    sources = [ ]
+    plots_array = []
     for sock in sock_ids:
         if is_group_sockid(sock):
-            group_source = models.ColumnDataSource(df[df.SocketID == sock])
-            sources.append(group_source)
+            group_df = df[df.SocketID == sock]
+            group_source = models.ColumnDataSource(group_df)
+            plots_array.append(create_packets_plot(group_source, is_sender, True, f'group @{sock}'))
             print(f'Group {sock}')
         else:
-            print(f'Member {sock}')
+            member_df = df[df.SocketID == sock]
+            weight = member_df.weight.iloc[0]
+            print(f'Member {sock} weight {weight}')
             src = models.ColumnDataSource(df[df.SocketID == sock])
-            sources.append(src)
+            plots_array.append(create_packets_plot(src, is_sender, False, f'member @{sock} weight {weight}'))
     
-        # Output to static .html file
+    # Output to static .html file
     plotting.output_file(html_filepath, title="SRT Stats Visualization")
-
-    # A dict for storing plots
-    plots = {}
-
-    # Create plots
-    
-    # Packets Statistics (receiver or sender)
-    plots['packets_group'] = create_packets_plot(sources[0], is_sender, "Group")
-    #export_plot_png(export_png, plots['packets'], name, 'packets')
-    plots['packets_sock'] = create_packets_plot(sources[1], is_sender, "Member 1")
-    plots['packets_sock2'] = create_packets_plot(sources[2], is_sender, "Member 2")
 
     # Sending / Receiving Rate
     #plots['rate'] = create_rate_plot(source, is_sender)
     #export_plot_png(export_png, plots['rate'], name, 'rate')
 
-    # Syncronize x-ranges of figures
-    last_key = list(plots)[-1]
-    last_fig = plots[last_key]
+    # Synchronize x-ranges of figures
+    last_fig = plots_array[-1]
     
-    for fig in plots.values():
+    for fig in plots_array:
         if fig is None:
             continue
         fig.x_range = last_fig.x_range
 
     # Show the results
     grid = layouts.gridplot(
-        [
-            [plots['packets_group']],
-            [plots['packets_sock']],
-            [plots['packets_sock2']]
-        ]
+        [[el] for el in plots_array] 
     )
     plotting.show(grid)
 

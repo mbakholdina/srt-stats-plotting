@@ -74,13 +74,20 @@ def create_packets_plot(source, is_sender, is_group, sockname):
                 linedesc('pktFlightSize', 'On Flight', 'black'),
             ]
     else:
-        lines = [
-            linedesc('pktRecv', 'Received', 'green'),
-            linedesc('pktRcvLoss', 'Lost', 'orange'),
-            linedesc('pktRcvRetrans', 'Retransmitted', 'blue'),
-            linedesc('pktRcvBelated', 'Belated', 'grey'),
-            linedesc('pktRcvDrop', 'Dropped', 'red'),
-        ]
+        if is_group:
+            lines = [
+                linedesc('pktRecvUnique', 'RecvUnique', 'green'),
+                linedesc('pktRcvDrop', 'Dropped', 'red')
+
+            ]
+        else:
+            lines = [
+                linedesc('pktRecv', 'Received', 'green'),
+                linedesc('pktRcvLoss', 'Lost', 'orange'),
+                linedesc('pktRcvRetrans', 'Retransmitted', 'blue'),
+                linedesc('pktRcvBelated', 'Belated', 'grey'),
+                linedesc('pktRcvDrop', 'Dropped', 'red'),
+            ]
 
     return create_plot(
         'Packets (' + side_name + ' Side, ' + sockname + ')',

@@ -117,6 +117,23 @@ def create_acks_plot(source, is_total):
     )
 
 
+def create_bytes_plot_snd(source, is_total):
+    type = 'Total' if is_total else 'Instant'
+
+    if is_total:
+        lines = [linedesc('bytesSentTotal', '', 'green')]
+    else:
+        lines = [linedesc('bytesSent', '', 'green')]
+
+    return create_plot(
+        f'Bytes Sent (Sender Side), {type}',
+        'Bytes',
+        source,
+        lines,
+        models.NumeralTickFormatter(format='0,0')
+    )
+
+
 def create_bytes_plot_rcv(source, is_total):
     type = 'Total' if is_total else 'Instant'
 
@@ -134,20 +151,45 @@ def create_bytes_plot_rcv(source, is_total):
     )
 
 
+def create_megabits_plot(source, is_total, is_snd):
+    type = 'Total' if is_total else 'Instant'
+    side = 'Sent' if is_snd else 'Recv'
+    title = f'Megabits Sent (Sender Side), {type}' if is_snd else f'Megabits Received (Receiver Side), {type}'
+
+    if is_total:
+        lines = [linedesc(f'megabits{side}Total', '', 'green')]
+    else:
+        lines = [linedesc(f'megabits{side}', '', 'green')]
+
+    return create_plot(
+        title,
+        'Megabits',
+        source,
+        lines,
+        models.NumeralTickFormatter(format='0,0.00')
+    )
+
+
 def calculate_instant_stats(df: pd.DataFrame):
     df['pktSent'] = df['pktSentTotal'].diff().fillna(df['pktSentTotal'].iloc[0]).astype('int32')
     df['pktLost'] = df['pktLostTotal'].diff().fillna(df['pktLostTotal'].iloc[0]).astype('int32')
+    df['bytesSent'] = df['bytesSentTotal'].diff().fillna(df['bytesSentTotal'].iloc[0])
+    df['megabitsSentTotal'] = df['bytesSentTotal'] * 8 / 1000000
+    df['megabitsSent'] = df['megabitsSentTotal'].diff().fillna(df['megabitsSentTotal'].iloc[0])
 
     df['pktRecv'] = df['pktRecvTotal'].diff().fillna(df['pktRecvTotal'].iloc[0]).astype('int32')
     df['pktDecryptFail'] = df['pktDecryptFailTotal'].diff().fillna(df['pktDecryptFailTotal'].iloc[0]).astype('int32')
     df['bytesRecv'] = df['bytesRecvTotal'].diff().fillna(df['bytesRecvTotal'].iloc[0])
+    df['megabitsRecvTotal'] = df['bytesRecvTotal'] * 8 / 1000000
+    df['megabitsRecv'] = df['megabitsRecvTotal'].diff().fillna(df['megabitsRecvTotal'].iloc[0])
 
     return df[[
         'Timepoint', 'Time', 'sTime',
         'pktSent', 'pktSentTotal', 'pktLost', 'pktLostTotal',               # sender side
+        'bytesSent', 'bytesSentTotal', 'megabitsSent', 'megabitsSentTotal', # sender side
         'pktRecvAck', 'pktRecvLateAck',                                     # sender side
         'pktRecv', 'pktRecvTotal', 'pktDecryptFail', 'pktDecryptFailTotal', # receiver side
-        'bytesRecv', 'bytesRecvTotal',                                      # receiver side
+        'bytesRecv', 'bytesRecvTotal', 'megabitsRecv', 'megabitsRecvTotal', # receiver side
     ]]
 
 
@@ -206,8 +248,16 @@ def plot_graph(stats_filepath):
     plots['acks_total'] = create_acks_plot(source, True)
 
     # Statistics in bytes
+    plots['bytes_snd_total'] = create_bytes_plot_snd(source, True)
+    plots['bytes_snd_instant'] = create_bytes_plot_snd(source, False)
     plots['bytes_rcv_total'] = create_bytes_plot_rcv(source, True)
     plots['bytes_rcv_instant'] = create_bytes_plot_rcv(source, False)
+
+    # These graphs are correct if only statistics is collected each 1s
+    plots['megabits_snd_total'] = create_megabits_plot(source, True, True)
+    plots['megabits_snd_instant'] = create_megabits_plot(source, False, True)
+    plots['megabits_rcv_total'] = create_megabits_plot(source, True, False)
+    plots['megabits_rcv_instant'] = create_megabits_plot(source, False, False)
 
     # Syncronize x-ranges of figures
     last_key = list(plots)[-1]
@@ -222,9 +272,12 @@ def plot_graph(stats_filepath):
     grid = layouts.gridplot(
         [
             [plots['packets_snd_instant'], plots['packets_snd_total']],
+            [plots['bytes_snd_instant'], plots['bytes_snd_total']],
+            [plots['megabits_snd_instant'], plots['megabits_snd_total']],
             [None, plots['acks_total']],
             [plots['packets_rcv_instant'], plots['packets_rcv_total']],
-            [plots['bytes_rcv_instant'], plots['bytes_rcv_total']]
+            [plots['bytes_rcv_instant'], plots['bytes_rcv_total']],
+            [plots['megabits_rcv_instant'], plots['megabits_rcv_total']],
         ]
     )
     plotting.show(grid)

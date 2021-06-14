@@ -63,7 +63,7 @@ def create_packets_plot_snd(source, is_total):
         ]
 
     return create_plot(
-        f'Packets (Sender Side), {type}',
+        f'Packets, {type}',
         'Number of Packets',
         source,
         lines,
@@ -86,7 +86,7 @@ def create_packets_plot_rcv(source, is_total):
         ]
 
     return create_plot(
-        f'Packets (Receiver Side), {type}',
+        f'Packets, {type}',
         'Number of Packets',
         source,
         lines,
@@ -99,8 +99,8 @@ def create_acks_plot(source, is_total):
 
     if is_total:
         lines = [
-            linedesc('pktRecvAck', 'Received Acks', 'orange'),
-            linedesc('pktRecvLateAck', 'Received Late Acks', 'blue')
+            linedesc('pktRecvAck', 'Acks', 'orange'),
+            linedesc('pktRecvLateAck', 'Late Acks', 'blue')
         ]
     else:
         lines = [
@@ -109,7 +109,7 @@ def create_acks_plot(source, is_total):
         ]
 
     return create_plot(
-        f'Acknowledgment Packets (Sender Side), {type}',
+        f'Acknowledgments Received, {type}',
         'Number of Packets',
         source,
         lines,
@@ -117,44 +117,30 @@ def create_acks_plot(source, is_total):
     )
 
 
-def create_bytes_plot_snd(source, is_total):
-    type = 'Total' if is_total else 'Instant'
-
-    if is_total:
-        lines = [linedesc('bytesSentTotal', '', 'green')]
-    else:
-        lines = [linedesc('bytesSent', '', 'green')]
-
-    return create_plot(
-        f'Bytes Sent (Sender Side), {type}',
-        'Bytes',
-        source,
-        lines,
-        models.NumeralTickFormatter(format='0,0')
-    )
-
-
-def create_bytes_plot_rcv(source, is_total):
-    type = 'Total' if is_total else 'Instant'
-
-    if is_total:
-        lines = [linedesc('bytesRecvTotal', '', 'green')]
-    else:
-        lines = [linedesc('bytesRecv', '', 'green')]
-
-    return create_plot(
-        f'Bytes Received (Receiver Side), {type}',
-        'Bytes',
-        source,
-        lines,
-        models.NumeralTickFormatter(format='0,0')
-    )
-
-
-def create_megabits_plot(source, is_total, is_snd):
+def create_bytes_plot(source, is_snd, is_total):
     type = 'Total' if is_total else 'Instant'
     side = 'Sent' if is_snd else 'Recv'
-    title = f'Megabits Sent (Sender Side), {type}' if is_snd else f'Megabits Received (Receiver Side), {type}'
+    title = f'Bytes Sent, {type}' if is_snd else f'Bytes Received, {type}'
+
+    if is_total:
+        lines = [linedesc(f'bytes{side}Total', '', 'green')]
+    else:
+        lines = [linedesc(f'bytes{side}', '', 'green')]
+
+    return create_plot(
+        title,
+        'Bytes',
+        source,
+        lines,
+        models.NumeralTickFormatter(format='0,0')
+    )
+
+
+def create_megabits_plot(source, is_snd, is_total):
+    # These graphs are correct if only statistics are collected each 1s
+    type = 'Total' if is_total else 'Instant'
+    side = 'Sent' if is_snd else 'Recv'
+    title = f'Megabits Sent, {type}' if is_snd else f'Megabits Received, {type}'
 
     if is_total:
         lines = [linedesc(f'megabits{side}Total', '', 'green')]
@@ -168,6 +154,47 @@ def create_megabits_plot(source, is_total, is_snd):
         lines,
         models.NumeralTickFormatter(format='0,0.00')
     )
+
+
+def panel(source, is_snd):
+    side = 'Sender' if is_snd else 'Receiver'
+
+    plots = {}
+
+    if is_snd:
+        plots['packets_total'] = create_packets_plot_snd(source, True)
+        plots['packets_instant'] = create_packets_plot_snd(source, False)
+        plots['acks_total'] = create_acks_plot(source, True)
+    else:
+        plots['packets_total'] = create_packets_plot_rcv(source, True)
+        plots['packets_instant'] = create_packets_plot_rcv(source, False)
+        plots['acks_total'] = None
+
+    plots['bytes_total'] = create_bytes_plot(source, is_snd, True)
+    plots['bytes_instant'] = create_bytes_plot(source, is_snd, False)
+    plots['megabits_total'] = create_megabits_plot(source, is_snd, True)
+    plots['megabits_instant'] = create_megabits_plot(source, is_snd, False)
+
+    # Syncronize x-ranges of figures
+    last_key = list(plots)[-1]
+    last_fig = plots[last_key]
+    
+    for fig in plots.values():
+        if fig is None:
+            continue
+        fig.x_range = last_fig.x_range
+
+    grid = layouts.gridplot(
+        [
+            [plots['packets_instant'], plots['packets_total']],
+            [plots['bytes_instant'], plots['bytes_total']],
+            [plots['megabits_instant'], plots['megabits_total']],
+            [None, plots['acks_total']],
+        ]
+    )
+
+    panel = models.widgets.Panel(child=grid, title=f'{side} Statistics')
+    return panel
 
 
 def calculate_instant_stats(df: pd.DataFrame):
@@ -198,10 +225,10 @@ def calculate_instant_stats(df: pd.DataFrame):
     'stats_filepath',
     type=click.Path(exists=True)
 )
-def plot_graph(stats_filepath):
+def main(stats_filepath):
     """
     This script processes .csv file with SRT over QUIC statistics produced by
-    test application and visualizes the data.
+    the test application and visualizes the data.
     """
     filepath = pathlib.Path(stats_filepath)
     filename = filepath.name
@@ -228,60 +255,17 @@ def plot_graph(stats_filepath):
     print(df)
     print(df.info())
 
-    source = models.ColumnDataSource(df)
-
     # Output to static .html file
-    plotting.output_file(html_filepath, title="SRT Stats Visualization")
+    plotting.output_file(html_filepath, title="SRT over QUIC Statistics")
+    panels = []
 
-    # A dict for storing plots
-    plots = {}
+    source = models.ColumnDataSource(df)
+    panels.append(panel(source, True))
+    panels.append(panel(source, False))
 
-    # Create plots
-
-    # Packets statistics
-    plots['packets_snd_total'] = create_packets_plot_snd(source, True)
-    plots['packets_snd_instant'] = create_packets_plot_snd(source, False)
-    plots['packets_rcv_total'] = create_packets_plot_rcv(source, True)
-    plots['packets_rcv_instant'] = create_packets_plot_rcv(source, False)
-
-    # Acknowledgement packets statistics
-    plots['acks_total'] = create_acks_plot(source, True)
-
-    # Statistics in bytes
-    plots['bytes_snd_total'] = create_bytes_plot_snd(source, True)
-    plots['bytes_snd_instant'] = create_bytes_plot_snd(source, False)
-    plots['bytes_rcv_total'] = create_bytes_plot_rcv(source, True)
-    plots['bytes_rcv_instant'] = create_bytes_plot_rcv(source, False)
-
-    # These graphs are correct if only statistics is collected each 1s
-    plots['megabits_snd_total'] = create_megabits_plot(source, True, True)
-    plots['megabits_snd_instant'] = create_megabits_plot(source, False, True)
-    plots['megabits_rcv_total'] = create_megabits_plot(source, True, False)
-    plots['megabits_rcv_instant'] = create_megabits_plot(source, False, False)
-
-    # Syncronize x-ranges of figures
-    last_key = list(plots)[-1]
-    last_fig = plots[last_key]
-    
-    for fig in plots.values():
-        if fig is None:
-            continue
-        fig.x_range = last_fig.x_range
-
-    # Show the results
-    grid = layouts.gridplot(
-        [
-            [plots['packets_snd_instant'], plots['packets_snd_total']],
-            [plots['bytes_snd_instant'], plots['bytes_snd_total']],
-            [plots['megabits_snd_instant'], plots['megabits_snd_total']],
-            [None, plots['acks_total']],
-            [plots['packets_rcv_instant'], plots['packets_rcv_total']],
-            [plots['bytes_rcv_instant'], plots['bytes_rcv_total']],
-            [plots['megabits_rcv_instant'], plots['megabits_rcv_total']],
-        ]
-    )
-    plotting.show(grid)
+    tabs = models.widgets.Tabs(tabs=panels)
+    plotting.show(tabs)
 
 
 if __name__ == '__main__':
-    plot_graph()
+    main()

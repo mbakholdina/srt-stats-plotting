@@ -99,13 +99,13 @@ def create_acks_plot(source, is_total):
 
     if is_total:
         lines = [
-            linedesc('pktRecvAck', 'Acks', 'orange'),
-            linedesc('pktRecvLateAck', 'Late Acks', 'blue')
+            linedesc('pktRecvAckTotal', 'Acks', 'orange'),
+            linedesc('pktRecvLateAckTotal', 'Late Acks', 'blue')
         ]
     else:
         lines = [
-            # linedesc('pktSent', 'Sent', 'green'),
-            # linedesc('pktLost', 'Lost', 'red'),
+            linedesc('pktRecvAck', 'Acks', 'orange'),
+            linedesc('pktRecvLateAck', 'Late Acks', 'blue')
         ]
 
     return create_plot(
@@ -203,6 +203,8 @@ def calculate_instant_stats(df: pd.DataFrame):
     df['bytesSent'] = df['bytesSentTotal'].diff().fillna(df['bytesSentTotal'].iloc[0])
     df['megabitsSentTotal'] = df['bytesSentTotal'] * 8 / 1000000
     df['megabitsSent'] = df['megabitsSentTotal'].diff().fillna(df['megabitsSentTotal'].iloc[0])
+    df['pktRecvAck'] = df['pktRecvAckTotal'].diff().fillna(df['pktRecvAckTotal'].iloc[0]).astype('int32')
+    df['pktRecvLateAck'] = df['pktRecvLateAckTotal'].diff().fillna(df['pktRecvLateAckTotal'].iloc[0]).astype('int32')
 
     df['pktRecv'] = df['pktRecvTotal'].diff().fillna(df['pktRecvTotal'].iloc[0]).astype('int32')
     df['pktDecryptFail'] = df['pktDecryptFailTotal'].diff().fillna(df['pktDecryptFailTotal'].iloc[0]).astype('int32')
@@ -212,11 +214,11 @@ def calculate_instant_stats(df: pd.DataFrame):
 
     return df[[
         'Timepoint', 'Time', 'sTime',
-        'pktSent', 'pktSentTotal', 'pktLost', 'pktLostTotal',               # sender side
-        'bytesSent', 'bytesSentTotal', 'megabitsSent', 'megabitsSentTotal', # sender side
-        'pktRecvAck', 'pktRecvLateAck',                                     # sender side
-        'pktRecv', 'pktRecvTotal', 'pktDecryptFail', 'pktDecryptFailTotal', # receiver side
-        'bytesRecv', 'bytesRecvTotal', 'megabitsRecv', 'megabitsRecvTotal', # receiver side
+        'pktSent', 'pktSentTotal', 'pktLost', 'pktLostTotal',                          # sender side
+        'bytesSent', 'bytesSentTotal', 'megabitsSent', 'megabitsSentTotal',            # sender side
+        'pktRecvAck', 'pktRecvLateAckTotal','pktRecvAckTotal', 'pktRecvLateAckTotal',  # sender side
+        'pktRecv', 'pktRecvTotal', 'pktDecryptFail', 'pktDecryptFailTotal',            # receiver side
+        'bytesRecv', 'bytesRecvTotal', 'megabitsRecv', 'megabitsRecvTotal',            # receiver side
     ]]
 
 

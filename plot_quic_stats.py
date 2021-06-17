@@ -1,8 +1,6 @@
 from collections import namedtuple
-import os
 import pathlib
 
-import bokeh.io
 import bokeh.layouts as layouts
 import bokeh.models as models
 import bokeh.plotting as plotting
@@ -156,6 +154,17 @@ def create_megabits_plot(source, is_snd, is_total):
     )
 
 
+def create_rtt_plot(source):
+    lines = [linedesc('msRTTSmoothed', '', 'blue')]
+
+    return create_plot(
+        'Smoothed RTT',
+        'Milliseconds (ms)',
+        source,
+        lines
+    )
+
+
 def panel(source, is_snd):
     side = 'Sender' if is_snd else 'Receiver'
 
@@ -165,10 +174,12 @@ def panel(source, is_snd):
         plots['packets_total'] = create_packets_plot_snd(source, True)
         plots['packets_instant'] = create_packets_plot_snd(source, False)
         plots['acks_total'] = create_acks_plot(source, True)
+        plots['rtt'] = create_rtt_plot(source)
     else:
         plots['packets_total'] = create_packets_plot_rcv(source, True)
         plots['packets_instant'] = create_packets_plot_rcv(source, False)
         plots['acks_total'] = None
+        plots['rtt'] = None
 
     plots['bytes_total'] = create_bytes_plot(source, is_snd, True)
     plots['bytes_instant'] = create_bytes_plot(source, is_snd, False)
@@ -190,6 +201,7 @@ def panel(source, is_snd):
             [plots['bytes_instant'], plots['bytes_total']],
             [plots['megabits_instant'], plots['megabits_total']],
             [None, plots['acks_total']],
+            [plots['rtt'], None],
         ]
     )
 
@@ -217,6 +229,7 @@ def calculate_instant_stats(df: pd.DataFrame):
         'pktSent', 'pktSentTotal', 'pktLost', 'pktLostTotal',                          # sender side
         'bytesSent', 'bytesSentTotal', 'megabitsSent', 'megabitsSentTotal',            # sender side
         'pktRecvAck', 'pktRecvLateAckTotal','pktRecvAckTotal', 'pktRecvLateAckTotal',  # sender side
+        'msRTTSmoothed',                                                               # sender side
         'pktRecv', 'pktRecvTotal', 'pktDecryptFail', 'pktDecryptFailTotal',            # receiver side
         'bytesRecv', 'bytesRecvTotal', 'megabitsRecv', 'megabitsRecvTotal',            # receiver side
     ]]
@@ -245,17 +258,10 @@ def main(stats_filepath):
 
     # Prepare data
     df = pd.read_csv(filepath)
-
-    print(df)
-    print(df.info())
-
     df['Timepoint'] = pd.to_datetime(df['Timepoint'])
     df['Time'] = df['Timepoint'] - df['Timepoint'].iloc[0]
     df['sTime'] = df['Time'].dt.total_seconds()
     df = calculate_instant_stats(df)
-
-    print(df)
-    print(df.info())
 
     # Output to static .html file
     plotting.output_file(html_filepath, title="SRT over QUIC Statistics")

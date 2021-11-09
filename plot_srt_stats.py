@@ -193,9 +193,20 @@ def create_window_size_plot(source):
         lines,
         models.NumeralTickFormatter(format='0,0')
     )
+	
+def create_buf_timespan_plot(source, is_sender):
+    if is_sender and 'msSndBuf' in source.column_names:
+        lines = [linedesc('msSndBuf', '', 'blue')]
 
-def create_rcvbuf_timespan_plot(source):
-    if 'msRcvBuf' in source.column_names:
+        return create_plot(
+            'Sender buffer fullness',
+            'Time (ms)',
+            'Timespan (ms)',
+            source,
+            lines
+        )
+
+    if  (not is_sender) and 'msRcvBuf' in source.column_names:
         lines = [linedesc('msRcvBuf', '', 'blue')]
 
         return create_plot(
@@ -207,7 +218,6 @@ def create_rcvbuf_timespan_plot(source):
         )
 
     return None
-
 
 def create_latency_plot(source):
     if 'RCVLATENCYms' in source.column_names:
@@ -408,7 +418,7 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
 
     # Latency
     #plots['latency'] = create_latency_plot(source)
-    plots['msrcvbuf'] = create_rcvbuf_timespan_plot(source)
+    plots['msbuf'] = create_buf_timespan_plot(source, is_sender)
 
     # Packet Sending Period
     plot_packet_period = None
@@ -488,7 +498,7 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
             [plots['packets'], plots['window_size']],
             [plots['bytes'], plots['rtt']],
             [plots['rate'], plots['bw']],
-            [plot_packet_period, plots['msrcvbuf']],
+            [plot_packet_period, plots['msbuf']],
             [plot_avail_1, plot_avail_2],
             [plot_fec],
         ]

@@ -20,7 +20,7 @@ pip install -r requirements.txt
 
 ## Script Usage
 
-The main purpose of `plot_srt_stats.py` script is to visualize all the SRT core statistics produced during experiments by one of the [testing applications](https://github.com/Haivision/srt/blob/master/docs/stransmit.md) or third-party solutions supporting SRT protocol. Depending on whether this statistics is collected on sender or receiver side, the data plotted may vary.
+The main purpose of `plot_srt_stats.py` script is to visualize all the SRT core statistics produced during experiments by one of the [testing applications](https://github.com/Haivision/srt/blob/master/docs/apps/srt-live-transmit.md) or third-party solutions supporting SRT protocol. Depending on whether this statistics is collected on sender or receiver side, the data plotted may vary.
 
 SRT core statistics should be collected in a `.csv` file. Usually, as a naming convention rule the file name ends either on "-snd" or "-rcv" depending on the side (sender or receiver) where the data was collected. Or, file name can just contain "snd" or "rcv" part in it.
 
@@ -37,6 +37,14 @@ Use `--help` option in order to get the full list of options
 --export-png  Export plots to .png files.
 --help        Show this message and exit.
 ```
+
+## Usage with srt-live-transmit
+As mentioned this tool is intended for usage with [srt-live-transmit](https://github.com/Haivision/srt/blob/master/docs/apps/srt-live-transmit.md), for which you explicitly need to enable the export of statistics in .csv format. This can be done by passing the following parameters:
+- ` -statspf:csv` to ensure the CSV format is used when exporting.
+- ` -statsout:/path/to/desired/folder/filename-rcv.csv` to define where to write the statistics
+- ` -stats-report-frequency:1000` to define how often to write statistics (in ms), this example sets it to once per second.
+
+More information on srt-live-transmit's command line parameters can be found [here](https://github.com/Haivision/srt/blob/master/docs/apps/srt-live-transmit.md#command-line-options).
 
 ## Plots Description
 

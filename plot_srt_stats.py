@@ -199,7 +199,7 @@ def create_buf_timespan_plot(source, is_sender):
         lines = [linedesc('msSndBuf', '', 'blue')]
 
         return create_plot(
-            'Sender buffer fullness',
+            'Sender Buffer Fullness',
             'Time (ms)',
             'Timespan (ms)',
             source,
@@ -210,7 +210,7 @@ def create_buf_timespan_plot(source, is_sender):
         lines = [linedesc('msRcvBuf', '', 'blue')]
 
         return create_plot(
-            'Receiver buffer fullness',
+            'Receiver Buffer Fullness',
             'Time (ms)',
             'Timespan (ms)',
             source,

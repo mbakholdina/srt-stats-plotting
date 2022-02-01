@@ -20,7 +20,7 @@ pip install -r requirements.txt
 
 ## Script Usage
 
-The main purpose of `plot_srt_stats.py` script is to visualize all the SRT core statistics produced during experiments by one of the [testing applications](https://github.com/Haivision/srt/blob/master/docs/apps/srt-live-transmit.md) or third-party solutions supporting SRT protocol. Depending on whether this statistics is collected on sender or receiver side, the data plotted may vary.
+The main purpose of `plot_srt_stats.py` script is to visualize SRT core statistics produced during experiments by one of the testing applications like [srt-xtransmit](https://github.com/maxsharabayko/srt-xtransmit) and [srt-live-transmit](https://github.com/Haivision/srt/blob/master/docs/apps/srt-live-transmit.md) or third-party solutions supporting SRT protocol. Depending on whether this statistics is collected on sender or receiver side, the data plotted may vary.
 
 SRT core statistics should be collected in a `.csv` file. Usually, as a naming convention rule the file name ends either on "-snd" or "-rcv" depending on the side (sender or receiver) where the data was collected. Or, file name can just contain "snd" or "rcv" part in it.
 

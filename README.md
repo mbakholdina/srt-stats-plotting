@@ -57,7 +57,7 @@ where _interval_ is the interval indicating how frequently the statistics is col
 
 ## Example Plots
 
-The script plots different charts from SRT statistics, an example .csv file can be found in the examples folder, together with the corresponding output html. . For example, a chart to visualize statistics on the packets being sent, lost, retransmitted, dropped or on flight:
+The script plots different charts from SRT statistics. Examples of `.csv` files and corresponding `.html` output can be found in the [examples](https://github.com/mbakholdina/srt-stats-plotting/tree/master/examples) folder. For example, a chart to visualize statistics on the packets being sent, lost, retransmitted, dropped or on flight:
 
 <img src="img/packets_1.png" alt="packets_1" style="zoom:50%;" />
 

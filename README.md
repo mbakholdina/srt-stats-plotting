@@ -39,10 +39,10 @@ Use `--help` option in order to get the full list of options
 ```
 
 ## Usage with srt-live-transmit
-As mentioned this tool is intended for usage with [srt-live-transmit](https://github.com/Haivision/srt/blob/master/docs/apps/srt-live-transmit.md), for which you explicitly need to enable the export of statistics in .csv format. This can be done by passing the following parameters:
+For the usage with [srt-live-transmit](https://github.com/Haivision/srt/blob/master/docs/apps/srt-live-transmit.md), make sure that the export of SRT statistics is enabled in .csv format. This can be done by passing the following parameters:
 - ` -statspf:csv` to ensure the CSV format is used when exporting.
 - ` -statsout:/path/to/desired/folder/filename-rcv.csv` to define where to write the statistics
-- ` -stats-report-frequency:1000` to define how often to write statistics (in # of packets), this example sets it to once per thousand packets.
+- ` -stats-report-frequency:1000` to define how often to write statistics (per # of packets), this example sets it to once per thousand packets.
 
 More information on srt-live-transmit's command line parameters can be found [here](https://github.com/Haivision/srt/blob/master/docs/apps/srt-live-transmit.md#command-line-options).
 

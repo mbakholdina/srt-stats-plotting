@@ -38,7 +38,7 @@ Use `--help` option in order to get the full list of options
 --help        Show this message and exit.
 ```
 
-## Usage with srt-live-transmit
+### Usage with srt-live-transmit
 For the usage with [srt-live-transmit](https://github.com/Haivision/srt/blob/master/docs/apps/srt-live-transmit.md), make sure that the export of SRT statistics is enabled in .csv format. This can be done by passing the following parameters:
 - ` -statspf:csv` to ensure the CSV format is used when exporting.
 - ` -statsout:/path/to/desired/folder/filename-rcv.csv` to define where to write the statistics

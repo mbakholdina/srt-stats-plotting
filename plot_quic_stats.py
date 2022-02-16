@@ -264,7 +264,7 @@ def main(stats_filepath):
     df = calculate_instant_stats(df)
 
     # Output to static .html file
-    plotting.output_file(html_filepath, title="SRT over QUIC Statistics")
+    plotting.output_file(html_filepath, title="Tunneling SRT over QUIC Datagram - Statistics")
     panels = []
 
     source = models.ColumnDataSource(df)

@@ -492,6 +492,13 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
             continue
         fig.x_range = last_fig.x_range
 
+    # TODO: Make a separate panel for summary statistics here
+    print(f"Received, total: {df['pktRecv'].sum()}")
+    print(f"Lost, total: {df['pktRcvLoss'].sum()}")
+    print(f"Retransmitted, total: {df['pktRcvRetrans'].sum()}")
+    print(f"Belated, total: {df['pktRcvBelated'].sum()}")
+    print(f"Dropped, total: {df['pktRcvDrop'].sum()}")
+
     # Show the results
     grid = layouts.gridplot(
         [

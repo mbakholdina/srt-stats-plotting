@@ -46,9 +46,9 @@ def create_plot(title, xlabel, ylabel, source, lines, yformatter=None):
     for x in lines:
         if x.legend != '':
             is_legend = True
-            fig.line(x='Time', y=x.col, color=x.color, legend_label=x.legend, source=source)
+            fig.line(x='sTTime', y=x.col, color=x.color, legend_label=x.legend, source=source)
         else:
-            fig.line(x='Time', y=x.col, color=x.color, source=source)
+            fig.line(x='sTTime', y=x.col, color=x.color, source=source)
 
     if is_legend:
         fig.legend.click_policy="hide"
@@ -78,7 +78,7 @@ def create_packets_plot(source, is_sender):
 
     return create_plot(
         'Packets (' + side_name + ' Side)',
-        'Time (ms)',
+        'Time (s)',
         'Number of Packets',
         source,
         lines,
@@ -102,7 +102,7 @@ def create_bytes_plot(source, is_sender):
 
     return create_plot(
         'Megabytes (' + side_name + ' Side)',
-        'Time (ms)',
+        'Time (s)',
         'MB',
         source,
         lines,
@@ -125,7 +125,7 @@ def create_rate_plot(source, is_sender):
 
     return create_plot(
         side_name + ' Rate',
-        'Time (ms)',
+        'Time (s)',
         'Rate (Mbps)',
         source,
         lines,
@@ -138,7 +138,7 @@ def create_rtt_plot(source):
 
     return create_plot(
         'Round-Trip Time',
-        'Time (ms)',
+        'Time (s)',
         'RTT (ms)',
         source,
         lines
@@ -150,7 +150,7 @@ def create_pkt_send_period_plot(source):
 
     return create_plot(
         'Packet Sending Period',
-        'Time (ms)',
+        'Time (s)',
         'Period (μs)',
         source,
         lines
@@ -171,7 +171,7 @@ def create_avail_buffer_plot(source, is_sender):
 
     return create_plot(
         'Available ' + side_name + ' Buffer Size',
-        'Time (ms)',
+        'Time (s)',
         'MB',
         source,
         lines,
@@ -187,7 +187,7 @@ def create_window_size_plot(source):
 
     return create_plot(
         'Window Size',
-        'Time (ms)',
+        'Time (s)',
         'Number of Packets',
         source,
         lines,
@@ -200,7 +200,7 @@ def create_buf_timespan_plot(source, is_sender):
 
         return create_plot(
             'Sender Buffer Fullness',
-            'Time (ms)',
+            'Time (s)',
             'Timespan (ms)',
             source,
             lines
@@ -211,7 +211,7 @@ def create_buf_timespan_plot(source, is_sender):
 
         return create_plot(
             'Receiver Buffer Fullness',
-            'Time (ms)',
+            'Time (s)',
             'Timespan (ms)',
             source,
             lines
@@ -225,7 +225,7 @@ def create_latency_plot(source):
 
         return create_plot(
             'Latency',
-            'Time (ms)',
+            'Time (s)',
             'Latency (ms)',
             source,
             lines
@@ -239,7 +239,7 @@ def create_bandwidth_plot(source):
 
     return create_plot(
         'Bandwith',
-        'Time (ms)',
+        'Time (s)',
         'Bandwith (Mbps)',
         source,
         lines,
@@ -376,6 +376,13 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     # Prepare data
     df = pd.read_csv(filepath)
 
+    if 'Timepoint' in df.columns:
+        df['Timepoint'] = pd.to_datetime(df['Timepoint'])
+        df['TTime'] = df['Timepoint'] - df['Timepoint'].iloc[0]
+        df['sTTime'] = df['TTime'].dt.total_seconds()
+    else:
+        df['sTTime'] = df['Time'] / 1000
+
     DIVISOR = 1000000
     df['MBRecv'] = df['byteRecv'] / DIVISOR
     df['MBRcvDrop'] = df['byteRcvDrop'] / DIVISOR
@@ -457,24 +464,24 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
             tools=TOOLS
         )
         plot_fec.title.text = 'FEC - Packets (Receiver Side)'
-        plot_fec.xaxis.axis_label = 'Time (ms)'
+        plot_fec.xaxis.axis_label = 'Time (s)'
         plot_fec.yaxis.axis_label = 'Number of Packets'
         plot_fec.line(
-            x='Time',
+            x='sTTime',
             y='pktRcvFilterExtra',
             color='blue',
             legend_label='Extra received',
             source=source,
         )
         plot_fec.line(
-            x='Time',
+            x='sTTime',
             y='pktRcvFilterSupply',
             color='green',
             legend_label='Reconstructed',
             source=source,
         )
         plot_fec.line(
-            x='Time',
+            x='sTTime',
             y='pktRcvFilterLoss',
             color='red',
             legend_label='Not reconstructed',

@@ -2,6 +2,7 @@ from collections import namedtuple
 import os
 import pathlib
 
+from bokeh import __version__ as bokeh_version
 import bokeh.io
 import bokeh.layouts as layouts
 import bokeh.models as models
@@ -28,12 +29,25 @@ def export_plot_png(export_png, plot, name, postfix):
         bokeh.io.export_png(plot, filename=f'{name}-{postfix}.png')
 
 
+def create_figure(plot_width, plot_height, tools):
+
+    # Backward compatibility for Bokeh
+    if int(bokeh_version.split(".")[0]) >= 3:
+        return plotting.figure(
+            width=plot_width,
+            height=plot_height,
+            tools=tools
+        )
+    else:
+        return plotting.figure(
+            plot_width=plot_width,
+            plot_height=plot_height,
+            tools=tools
+        )
+
 def create_plot(title, xlabel, ylabel, source, lines, yformatter=None):
-    fig = plotting.figure(
-        plot_width=PLOT_WIDTH,
-        plot_height=PLOT_HEIGHT,
-        tools=TOOLS
-    )
+
+    fig = create_figure(PLOT_WIDTH, PLOT_HEIGHT, TOOLS)
     fig.title.text = title
     fig.xaxis.axis_label = xlabel
     fig.yaxis.axis_label = ylabel
@@ -458,11 +472,8 @@ def plot_graph(stats_filepath, is_sender, is_fec, export_png):
     # Receiver Statisitcs
     plot_fec = None
     if is_fec:
-        plot_fec = plotting.figure(
-            plot_width=PLOT_WIDTH,
-            plot_height=PLOT_HEIGHT,
-            tools=TOOLS
-        )
+        plot_fec = create_figure(PLOT_WIDTH, PLOT_HEIGHT, TOOLS)
+
         plot_fec.title.text = 'FEC - Packets (Receiver Side)'
         plot_fec.xaxis.axis_label = 'Time (s)'
         plot_fec.yaxis.axis_label = 'Number of Packets'
